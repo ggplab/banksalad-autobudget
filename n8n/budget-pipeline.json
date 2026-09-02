@@ -1,0 +1,594 @@
+{
+ "name": "Banksalad Budget Organizer — 뱅샐 export 메일 → 가계부 DB → 산출물",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "7,22,37,52 * * * *"
+      }
+     ]
+    }
+   },
+   "id": "b1000000-0000-4000-8000-000000000001",
+   "name": "Schedule 15분",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    -900,
+    300
+   ],
+   "notes": "뱅샐 지출 export 메일 폴링 트리거. 15분 간격이면 충분하다 — 정각을 피해 다른 자동화와 실행 시각이 겹치지 않게 분을 조정해 둔다. 새 환경에 배포할 때는 비밀번호·seen-state 준비가 끝난 뒤 활성화한다."
+  },
+  {
+   "parameters": {},
+   "id": "b1000000-0000-4000-8000-000000000002",
+   "name": "Manual 재태깅",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    -900,
+    500
+   ],
+   "notes": "태깅 규칙(가맹점 규칙·거래 오버라이드·고정비·카드 규칙 등 yaml)을 고친 뒤 push하고 사람이 한 번 누른다. export 없이 태깅→적용→생성·전달만 다시 돈다 (fetch-export --retag)."
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "home",
+       "name": "home",
+       "value": "/home/you/banksalad-budget-organizer",
+       "type": "string"
+      },
+      {
+       "id": "python",
+       "name": "python",
+       "value": ".venv/bin/python",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "b1000000-0000-4000-8000-000000000003",
+   "name": "0. 환경",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    -680,
+    300
+   ],
+   "notes": "실행 환경 스위치. home 은 파이프라인 코드가 설치된 절대경로, python 은 그 안의 인터프리터(가상환경 등) 경로다. 이 노드 하나만 고치면 모든 SSH 명령이 값을 이어받는다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py fetch-export --from-gmail {{ ($('Manual 재태깅').isExecuted || $('Webhook 재태깅').isExecuted) ? '--retag' : '' }}"
+   },
+   "id": "b1000000-0000-4000-8000-000000000004",
+   "name": "1. export 수신",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    -460,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "Gmail 에서 지출 export 메일을 조회해 최신 미처리 1통만 처리한다(중복 방지). 첨부 압축 해제 비번 등은 .env 로 관리한다. 재태깅 경로에서는 --retag 플래그로 새 메일 조회 없이 기존 데이터로 재실행한다. 실행 중 파이프라인 락을 잡고 마지막 단계에서 해제한다(두 실행이 개입되는 것을 방지)."
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "found-or-retag",
+       "leftValue": "={{ (() => { const j = JSON.parse($('1. export 수신').first().json.stdout); return !!(j.found || j.retag); })() }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   },
+   "id": "b1000000-0000-4000-8000-000000000005",
+   "name": "1b. 처리할 것 있나",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    -240,
+    300
+   ],
+   "notes": "새로 처리할 메일이 없거나(found=false) 락이 점유 중이면 조용히 끝난다 — 매 폴링마다 카드를 올리지 않는다. 락 점유 중이면 메시지를 seen 에 넣지 않아 다음 폴링에 재시도된다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py ingest"
+   },
+   "id": "b1000000-0000-4000-8000-000000000006",
+   "name": "2. 적재",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    -20,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "적재 전 DB 스냅샷을 남기고 upsert 한다. 고유 실패 모드: 시트/컬럼 스키마 변경, 빈 export. 상류 실패면 skipped 로 즉시 통과(run.json 단락)."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py tag"
+   },
+   "id": "b1000000-0000-4000-8000-000000000007",
+   "name": "3. 결정 태깅",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    200,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "가맹점 규칙 → 결제수단 기본 귀속 → 건별 오버라이드 순으로 태깅한다. 실패 모드: yaml 파싱."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py match-coupang"
+   },
+   "id": "b1000000-0000-4000-8000-000000000008",
+   "name": "4a. 쿠팡 매칭",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    420,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "이커머스 주문 알림 메일에서 품목·용도 정보를 채운다. 계정 토큰 만료는 보통 여기서 먼저 드러난다. 전 기간 재스캔이라 몇 분 걸릴 수 있다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py match-kurly"
+   },
+   "id": "b1000000-0000-4000-8000-000000000009",
+   "name": "4b. 컬리 매칭",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    640,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "별도 커머스 파서. 이전 매칭 노드와 실패 모드(파서 구조)가 달라 분리해 둔다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py match-naver"
+   },
+   "id": "b1000000-0000-4000-8000-00000000000a",
+   "name": "4c. 네이버페이 매칭",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    860,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "증빙(실결제처·품목)만 채운다. 귀속 판정은 사람이 한다. 메일 건수가 많아 가장 느린 노드다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py apply"
+   },
+   "id": "b1000000-0000-4000-8000-00000000000b",
+   "name": "5. apply",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    1080,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "우선순위 적용: 커머스 품목 → 규칙 → 원본 fallback → 결제수단 → 오버라이드. 출력에 용도 출처 분포를 남긴다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py llm --timeout 1800"
+   },
+   "id": "b1000000-0000-4000-8000-00000000000c",
+   "name": "6. LLM 용도추론",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    1300,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "규칙으로 못 채운 항목의 용도를 LLM 으로 추론한다. 소프트 실패 — 이 단계가 실패해도 파이프라인 자체는 계속 진행된다."
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "llm-bad",
+       "leftValue": "={{ (() => { let j; try { j = JSON.parse($('6. LLM 용도추론').first().json.stdout); } catch (e) { return true; } return j.skipped ? false : (j.ok === false || (j.batches_failed || 0) > 0); })() }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   },
+   "id": "b1000000-0000-4000-8000-00000000000d",
+   "name": "6b. LLM 이상?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1520,
+    300
+   ],
+   "notes": "exit 0 이지만 아무것도 안 한 침묵 실패를 잡는다 — LLM 호출 스크립트가 배치 실패를 삼키고 exit 0 을 내므로 종료코드 검증만으로는 못 잡는다. batches_failed>0 또는 ok:false 면 경보, 파이프라인은 계속."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py notify --text \"LLM 용도추론 이상\""
+   },
+   "id": "b1000000-0000-4000-8000-00000000000e",
+   "name": "6c. LLM 경보",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    1740,
+    140
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "알림 채널로 짧은 경보를 보낸다. 경보는 배포를 막지 않는다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py export"
+   },
+   "id": "b1000000-0000-4000-8000-00000000000f",
+   "name": "7. 산출물 생성·전달",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    1960,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "대시보드·워크시트를 생성·자체검증한 뒤 배포처로 전달한다. 원본에서는 생성·검증과 배포가 별개 단계였으나 공개판에서는 하나의 export 스테이지로 합쳤다."
+  },
+  {
+   "parameters": {
+    "authentication": "privateKey",
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py finish"
+   },
+   "id": "b1000000-0000-4000-8000-000000000011",
+   "name": "8. 결과 알림·락 해제",
+   "type": "n8n-nodes-base.ssh",
+   "typeVersion": 1,
+   "position": [
+    2180,
+    300
+   ],
+   "credentials": {
+    "sshPrivateKey": {
+     "name": "SSH: your-host"
+    }
+   },
+   "notes": "실행 결과를 카드 1장으로 알림 채널에 보낸다. 실패해도 올린다(어디서 멈췄는지). 락 해제 + 실행 기록 보존."
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "// n8n SSH 노드(typeVersion 1)는 종료코드를 무시하고 항상 success 를 낸다.\n// 헬퍼가 죽어도 Error Workflow 가 안 뜨므로 여기서 모아 던진다.\n// 전용 노드로 표현 불가능해 Code 를 쓴다.\n// 이 파이프라인은 run.json 단락 규약이 있다 — 상류가 죽으면 하류는 {skipped:true} 로\n// exit 0 을 내므로, 실패는 정확히 **한 노드**에서만 exit≠0 으로 나타난다.\nconst expect = {\n  '1. export 수신': 'fetch-export',\n  '2. 적재': 'ingest',\n  '3. 결정 태깅': 'tag',\n  '4a. 쿠팡 매칭': 'match-coupang',\n  '4b. 컬리 매칭': 'match-kurly',\n  '4c. 네이버페이 매칭': 'match-naver',\n  '5. apply': 'apply',\n  '6. LLM 용도추론': 'llm',\n  '6c. LLM 경보': 'notify',\n  '7. 산출물 생성·전달': 'export',\n  '8. 결과 알림·락 해제': 'finish',\n};\nconst failed = [], checked = [], skipped = [], detail = [];\nfor (const name of Object.keys(expect)) {\n  let items;\n  try { items = $(name).all(); } catch (e) { skipped.push(name + ' (미실행)'); continue; }\n  if (!items || !items.length) { skipped.push(name + ' (출력 없음)'); continue; }\n  const j = items[0].json;\n  if (j.code === undefined) { skipped.push(name + ' (SSH 출력 아님)'); continue; }\n  if (j.code !== 0) {\n    const tail = String(j.stderr || '').trim().split('\\n').pop() || '(stderr 없음)';\n    detail.push(name + ' exit ' + j.code + ': ' + tail.slice(0, 200));\n    failed.push(name + '(exit ' + j.code + ')');\n    continue;\n  }\n  let own = null;\n  try { own = JSON.parse(String(j.stdout || '')).node; } catch (e) { /* 파싱 불가 */ }\n  if (own !== expect[name]) { skipped.push(name + ' (disabled — 통과만 함)'); continue; }\n  checked.push(name);\n}\nif (failed.length) {\n  console.log('실패 상세: ' + detail.join(' | '));\n  throw new Error('가계 파이프라인 노드 실패: ' + failed.join(', '));\n}\nreturn [{ json: { all_ok: true, checked, skipped } }];"
+   },
+   "id": "b1000000-0000-4000-8000-000000000012",
+   "name": "9. 종료코드 검증",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2400,
+    300
+   ],
+   "notes": "SSH 노드 exit code 무시 대응. 던지면 Error Workflow 로 연결된 알림이 뜬다. 결과 카드가 먼저 올라간 뒤 경보가 뜨도록 결과 알림 노드 뒤에 둔다."
+  },
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "budget-retag",
+    "options": {}
+   },
+   "id": "b1000000-0000-4000-8000-000000000013",
+   "name": "Webhook 재태깅",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    -900,
+    700
+   ],
+   "webhookId": "b1000000-0000-4000-8000-000000000013",
+   "notes": "헤드리스 재태깅 진입점 — yaml 을 고친 뒤 POST 요청 한 번으로 재실행한다. 경로값 자체가 비밀 역할을 하므로 공개 전에 자신만의 값으로 바꿔라."
+  }
+ ],
+ "connections": {
+  "Schedule 15분": {
+   "main": [
+    [
+     {
+      "node": "0. 환경",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Manual 재태깅": {
+   "main": [
+    [
+     {
+      "node": "0. 환경",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "0. 환경": {
+   "main": [
+    [
+     {
+      "node": "1. export 수신",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "1. export 수신": {
+   "main": [
+    [
+     {
+      "node": "1b. 처리할 것 있나",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "1b. 처리할 것 있나": {
+   "main": [
+    [
+     {
+      "node": "2. 적재",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "2. 적재": {
+   "main": [
+    [
+     {
+      "node": "3. 결정 태깅",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "3. 결정 태깅": {
+   "main": [
+    [
+     {
+      "node": "4a. 쿠팡 매칭",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "4a. 쿠팡 매칭": {
+   "main": [
+    [
+     {
+      "node": "4b. 컬리 매칭",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "4b. 컬리 매칭": {
+   "main": [
+    [
+     {
+      "node": "4c. 네이버페이 매칭",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "4c. 네이버페이 매칭": {
+   "main": [
+    [
+     {
+      "node": "5. apply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "5. apply": {
+   "main": [
+    [
+     {
+      "node": "6. LLM 용도추론",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "6. LLM 용도추론": {
+   "main": [
+    [
+     {
+      "node": "6b. LLM 이상?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "6b. LLM 이상?": {
+   "main": [
+    [
+     {
+      "node": "6c. LLM 경보",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "7. 산출물 생성·전달",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "6c. LLM 경보": {
+   "main": [
+    [
+     {
+      "node": "7. 산출물 생성·전달",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "7. 산출물 생성·전달": {
+   "main": [
+    [
+     {
+      "node": "8. 결과 알림·락 해제",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "8. 결과 알림·락 해제": {
+   "main": [
+    [
+     {
+      "node": "9. 종료코드 검증",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Webhook 재태깅": {
+   "main": [
+    [
+     {
+      "node": "0. 환경",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "Asia/Seoul",
+  "executionTimeout": 3600,
+  "saveExecutionProgress": true
+ }
+}

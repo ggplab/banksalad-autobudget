@@ -20,3 +20,20 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# ── 개인 금융 데이터 — 절대 커밋 금지 ─────────────────────────────
+# 원본 export(이름·자산현황 포함), 누적 DB, 백업, 실행 상태
+data/
+*.db
+*.db.bak*
+*.xlsx
+!samples/sample-export.xlsx
+# 산출물 (전 거래가 들어간다)
+dist/
+# 자기 룰 (가맹점·거래 판정은 개인 정보) — example 만 추적
+rules/merchant_rules.yaml
+rules/transaction-overrides.yaml
+rules/attribution.yaml
+# OAuth 토큰·비밀
+*token*.json
+client_secret*.json

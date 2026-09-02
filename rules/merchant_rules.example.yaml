@@ -1,0 +1,37 @@
+# 가맹점 태깅 룰 — 정규식(content 대조) → purpose(용도) + attribution(귀속)
+#
+# 첫 매칭 규칙이 적용된다. 구체적인 패턴을 위에, 포괄적인 패턴을 아래에 배치하라.
+# purpose 16종: 육아/식비/생활용품/주거·공과/의료/교육·도서/교통·차량/문화·여가/의류·미용/경조사/
+#               사업-장비/사업-SaaS/사업-접대/사업-외주/금융·이체/기타
+# attribution: rules/attribution.yaml 의 labels 중 하나 (생략 가능)
+#
+# 이 파일은 **샘플**이다. rules/merchant_rules.yaml 로 복사한 뒤 자기 가맹점으로 채운다.
+# 룰을 고치면 `python3 pipeline.py run --retag` 로 재태깅한다 (export 없이 태깅부터 다시 돈다).
+
+- pattern: "스타벅스|이디야|메가커피|컴포즈"
+  purpose: "식비"
+
+- pattern: "GS25|CU|세븐일레븐|이마트24"
+  purpose: "생활용품"
+
+- pattern: "지하철|버스|택시|카카오T"
+  purpose: "교통·차량"
+
+- pattern: "넷플릭스|유튜브|멜론|스포티파이"
+  purpose: "문화·여가"
+
+- pattern: "약국|의원|병원|치과"
+  purpose: "의료"
+
+- pattern: "교보문고|예스24|알라딘"
+  purpose: "교육·도서"
+
+- pattern: "Notion|Adobe|GitHub|OpenAI|Anthropic"
+  purpose: "사업-SaaS"
+  attribution: "사업"
+
+- pattern: "관리비|도시가스|한국전력|SKT|KT|LGU"
+  purpose: "주거·공과"
+
+- pattern: "이체|송금"
+  purpose: "금융·이체"
