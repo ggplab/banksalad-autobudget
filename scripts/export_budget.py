@@ -160,7 +160,7 @@ td:nth-child(n+2){{text-align:right}} th{{background:#fafafa;font-weight:600}} .
 <h2>가맹점 TOP 15</h2><div class="wrap">{merchants}</div>
 <h2>정제 현황 ({H.escape(s['last_month'] or '')})</h2><p class="meta">주문메일 품목 부착률 — {H.escape(ev)}</p>
 <h2>최근 거래 {len(recent)}건</h2><div class="wrap">{recent_t}</div>
-<p class="meta">전체 거래는 budget.csv, 집계는 summary.json · banksalad-budget-organizer</p>
+<p class="meta">전체 거래는 budget.csv, 집계는 summary.json · banksalad-autobudget</p>
 </main></body></html>"""
 
 

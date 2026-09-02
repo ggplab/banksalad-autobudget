@@ -756,7 +756,7 @@ def _llm_call_openrouter(user: str, model: str, api_key: str, timeout: int = 120
     req = urllib.request.Request(OPENROUTER_URL, data=payload.encode(), method="POST",
                                  headers={"Authorization": f"Bearer {api_key}",
                                           "Content-Type": "application/json",
-                                          "X-Title": "banksalad-budget-organizer"})
+                                          "X-Title": "banksalad-autobudget"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         body = json.loads(resp.read().decode())
     return body["choices"][0]["message"]["content"]

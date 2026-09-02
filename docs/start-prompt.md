@@ -6,7 +6,7 @@ Claude Code · Codex CLI · Gemini CLI 중 어느 것이든 repo 루트에서 �
 ---
 
 ```
-이 repo(banksalad-budget-organizer)를 내 환경에 맞게 세팅하고 첫 실행까지 해줘. README.md 를 먼저 읽어.
+이 repo(banksalad-autobudget)를 내 환경에 맞게 세팅하고 첫 실행까지 해줘. README.md 를 먼저 읽어.
 
 순서:
 1. Python 3.10+ 확인 후 .venv 만들고 requirements.txt 설치.

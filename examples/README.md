@@ -7,7 +7,7 @@
 
 ```cron
 # 15분마다 Gmail 폴링 → 새 export 있으면 전 단계 실행
-*/15 * * * * cd /home/you/banksalad-budget-organizer && .venv/bin/python pipeline.py run --from-gmail >> ~/budget-pipeline.log 2>&1
+*/15 * * * * cd /home/you/banksalad-autobudget && .venv/bin/python pipeline.py run --from-gmail >> ~/budget-pipeline.log 2>&1
 ```
 
 `.env` 는 pipeline.py 가 스스로 읽으므로 cron 환경변수를 따로 손댈 필요 없다.
@@ -16,11 +16,11 @@ LLM 백엔드가 `claude`/`codex`/`gemini` CLI 면 cron 에서는 PATH 에 그 �
 
 ## launchd (macOS)
 
-`examples/com.example.budget-organizer.plist` 를 `~/Library/LaunchAgents/` 에 복사하고 경로 두 곳을 고친 뒤:
+`examples/com.example.autobudget.plist` 를 `~/Library/LaunchAgents/` 에 복사하고 경로 두 곳을 고친 뒤:
 
 ```bash
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.example.budget-organizer.plist
-launchctl kickstart -k gui/$(id -u)/com.example.budget-organizer     # 즉시 1회
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.example.autobudget.plist
+launchctl kickstart -k gui/$(id -u)/com.example.autobudget     # 즉시 1회
 ```
 
 - 로그는 `~/Library/Logs/` 에 둔다. `/tmp` 는 macOS 가 주기적으로 비운다.

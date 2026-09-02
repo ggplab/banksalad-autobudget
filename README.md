@@ -1,4 +1,4 @@
-# banksalad-budget-organizer
+# banksalad-autobudget
 
 뱅크샐러드 가계부 export 한 통을 **적재 → 태깅 → 주문메일로 품목 보강 → LLM 용도 추론 → 리포트 → 원하는 곳으로 전달**까지
 사람 손 없이 정리하는 파이프라인. 사람이 하는 일은 뱅샐 앱에서 "설정 → 데이터 내보내기 → 파일로 받기" 한 번이다.
@@ -50,7 +50,7 @@ flowchart LR
 ## 5분 퀵스타트 (샘플 데이터)
 
 ```bash
-git clone https://github.com/ggplab/banksalad-budget-organizer && cd banksalad-budget-organizer
+git clone https://github.com/ggplab/banksalad-autobudget && cd banksalad-autobudget
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt     # Python 3.10+
 .venv/bin/python pipeline.py run --file samples/sample-export.xlsx --dry-run
 open dist/budget.html
