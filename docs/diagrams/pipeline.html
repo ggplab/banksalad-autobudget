@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>banksalad-autobudget — 워크플로</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --paper:#f6f5f4; --white:#ffffff; --ink:#1a1a1a; --muted:#6b6b6b; --rule:#e5e5e5; --accent:#2B4AC6;
+            --sans:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif; }
+    body { font-family: var(--sans); background: var(--paper); color: var(--ink); padding: 2rem; }
+    .frame { max-width: 1000px; }
+    svg { width: 100%; display: block; }
+  </style>
+</head>
+<body>
+<div class="frame">
+<svg viewBox="0 0 1000 424" xmlns="http://www.w3.org/2000/svg" font-family="Pretendard, 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6b6b6b"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2B4AC6"/></marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#f6f5f4"/>
+
+  <!-- arrows first -->
+  <!-- row 1 -->
+  <line x1="240" y1="120" x2="272" y2="120" stroke="#2B4AC6" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <line x1="480" y1="120" x2="512" y2="120" stroke="#6b6b6b" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="720" y1="120" x2="752" y2="120" stroke="#6b6b6b" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- match(row1, x 760..960) → apply(row2, x 40..240): down, left, down with r=8 elbows -->
+  <path d="M860,176 V216 a8,8 0 0 1 -8,8 H148 a8,8 0 0 0 -8,8 V264" fill="none" stroke="#6b6b6b" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- row 2 -->
+  <line x1="240" y1="328" x2="272" y2="328" stroke="#6b6b6b" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="480" y1="328" x2="512" y2="328" stroke="#6b6b6b" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="720" y1="328" x2="752" y2="328" stroke="#2B4AC6" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- ① TRIGGER (focal) -->
+  <rect x="40" y="64" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="40" y="64" width="200" height="112" rx="6" fill="rgba(37,99,235,0.08)" stroke="#2B4AC6" stroke-width="1"/>
+  <text x="56" y="88" fill="#2B4AC6" font-size="16" font-weight="700" letter-spacing="0.08em">① TRIGGER</text>
+  <text x="140" y="124" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">export 받기</text>
+  <text x="140" y="156" fill="#6b6b6b" font-size="16" text-anchor="middle">파일 드롭 · Gmail · 재태깅</text>
+
+  <!-- ingest -->
+  <rect x="280" y="64" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="280" y="64" width="200" height="112" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="296" y="88" fill="#6b6b6b" font-size="16" font-weight="700" letter-spacing="0.08em">② TASK</text>
+  <text x="380" y="124" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">적재</text>
+  <text x="380" y="156" fill="#6b6b6b" font-size="16" text-anchor="middle">SQLite upsert · 백업</text>
+
+  <!-- tag -->
+  <rect x="520" y="64" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="520" y="64" width="200" height="112" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="536" y="88" fill="#6b6b6b" font-size="16" font-weight="700" letter-spacing="0.08em">② TASK</text>
+  <text x="620" y="124" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">태깅</text>
+  <text x="620" y="156" fill="#6b6b6b" font-size="16" text-anchor="middle">룰 · 결제수단 · 오버라이드</text>
+
+  <!-- match -->
+  <rect x="760" y="64" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="760" y="64" width="200" height="112" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="776" y="88" fill="#6b6b6b" font-size="16" font-weight="700" letter-spacing="0.08em">② TASK</text>
+  <text x="860" y="124" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">품목 보강</text>
+  <text x="860" y="156" fill="#6b6b6b" font-size="16" text-anchor="middle">쿠팡 · 컬리 · 네이버페이 메일</text>
+
+  <!-- apply -->
+  <rect x="40" y="272" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="40" y="272" width="200" height="112" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="56" y="296" fill="#6b6b6b" font-size="16" font-weight="700" letter-spacing="0.08em">② TASK</text>
+  <text x="140" y="332" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">우선순위 확정</text>
+  <text x="140" y="364" fill="#6b6b6b" font-size="16" text-anchor="middle">오버라이드 › 품목 › 룰 › 분류</text>
+
+  <!-- llm -->
+  <rect x="280" y="272" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="280" y="272" width="200" height="112" rx="6" fill="rgba(26,26,26,0.02)" stroke="rgba(26,26,26,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="296" y="296" fill="#6b6b6b" font-size="16" font-weight="700" letter-spacing="0.08em">② TASK · 선택</text>
+  <text x="380" y="332" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">LLM 용도 추론</text>
+  <text x="380" y="364" fill="#6b6b6b" font-size="16" text-anchor="middle">애매한 건만 · 실패해도 진행</text>
+
+  <!-- export -->
+  <rect x="520" y="272" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="520" y="272" width="200" height="112" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="536" y="296" fill="#6b6b6b" font-size="16" font-weight="700" letter-spacing="0.08em">② TASK</text>
+  <text x="620" y="332" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">리포트 생성</text>
+  <text x="620" y="364" fill="#6b6b6b" font-size="16" text-anchor="middle">csv · json · html</text>
+
+  <!-- ③ TARGET (focal) -->
+  <rect x="760" y="272" width="200" height="112" rx="6" fill="#f6f5f4"/>
+  <rect x="760" y="272" width="200" height="112" rx="6" fill="rgba(37,99,235,0.08)" stroke="#2B4AC6" stroke-width="1"/>
+  <text x="776" y="296" fill="#2B4AC6" font-size="16" font-weight="700" letter-spacing="0.08em">③ TARGET</text>
+  <text x="860" y="332" fill="#1a1a1a" font-size="24" font-weight="700" text-anchor="middle">보낼 곳</text>
+  <text x="860" y="364" fill="#6b6b6b" font-size="16" text-anchor="middle">5곳 중 선택 · 기본 html</text>
+</svg>
+</div>
+</body>
+</html>

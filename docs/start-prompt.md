@@ -1,4 +1,4 @@
-# 시작 프롬프트 — AI 코딩 에이전트에게 세팅을 맡길 때
+# 시작 프롬프트 . AI 코딩 에이전트에게 세팅을 맡길 때
 
 Claude Code · Codex CLI · Gemini CLI 중 어느 것이든 repo 루트에서 열고 아래를 그대로 붙여 넣는다.
 에이전트가 README 의 flowchart 를 따라 질문하고, `.env`·룰 파일을 채우고, 샘플 → 실데이터 순으로 돌린다.
@@ -13,13 +13,13 @@ Claude Code · Codex CLI · Gemini CLI 중 어느 것이든 repo 루트에서 �
 2. 샘플로 파이프라인이 도는지 먼저 확인: `pipeline.py run --file samples/sample-export.xlsx --dry-run`
    → dist/budget.html 이 생기면 통과.
 3. 나에게 아래를 한 번에 물어보고 답을 .env 에 반영해 (cp .env.example .env 부터):
-   a. Trigger — export 파일을 매번 직접 넘길지(파일 드롭), Gmail 에서 자동 수신할지.
+   a. Trigger . export 파일을 매번 직접 넘길지(파일 드롭), Gmail 에서 자동 수신할지.
       Gmail 이면 scripts/gmail_client.py docstring 의 GCP OAuth 절차를 안내하고 `--auth` 를 같이 돌려.
-   b. 보강 — 쿠팡·컬리·네이버페이 주문메일이 같은 Gmail 계정에 있는지, 다른 계정인지, 안 쓸지.
-   c. LLM — 지금 네가 돌고 있는 CLI 를 백엔드로 쓸지(claude/codex/gemini), OpenRouter 키를 쓸지, 끌지.
-   d. Target — html / email / discord / hook / artifact 중 무엇. artifact 면 실행 후 dist/budget.html 을
+   b. 보강 . 쿠팡·컬리·네이버페이 주문메일이 같은 Gmail 계정에 있는지, 다른 계정인지, 안 쓸지.
+   c. LLM . 지금 네가 돌고 있는 CLI 를 백엔드로 쓸지(claude/codex/gemini), OpenRouter 키를 쓸지, 끌지.
+   d. Target . html / email / discord / hook / artifact 중 무엇. artifact 면 실행 후 dist/budget.html 을
       이 세션의 아티팩트로 올려서 보여줘.
-   e. 귀속 — 개인만인지, 사업자가 있어서 결제수단별로 개인/사업을 가를지. 있으면 rules/attribution.yaml 을 만들어.
+   e. 귀속 . 개인만인지, 사업자가 있어서 결제수단별로 개인/사업을 가를지. 있으면 rules/attribution.yaml 을 만들어.
 4. rules/merchant_rules.example.yaml 을 rules/merchant_rules.yaml 로 복사하고, 내 뱅샐 export 의 가맹점 상위 30개를
    보여주면서 룰을 같이 채워 (내가 답하는 대로).
 5. 실데이터로 `pipeline.py run --file <내 export>` 실행. 결과 카드(stderr 마지막 블록)와 dist/budget.html 요약을 보여줘.

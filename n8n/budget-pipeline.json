@@ -18,7 +18,7 @@
    "typeVersion": 1.2,
    "position": [
     -900,
-    300
+    120
    ],
    "notes": "뱅샐 지출 export 메일 폴링 트리거. 15분 간격이면 충분하다 — 정각을 피해 다른 자동화와 실행 시각이 겹치지 않게 분을 조정해 둔다. 새 환경에 배포할 때는 비밀번호·seen-state 준비가 끝난 뒤 활성화한다."
   },
@@ -30,7 +30,7 @@
    "typeVersion": 1,
    "position": [
     -900,
-    500
+    320
    ],
    "notes": "태깅 규칙(가맹점 규칙·거래 오버라이드·고정비·카드 규칙 등 yaml)을 고친 뒤 push하고 사람이 한 번 누른다. export 없이 태깅→적용→생성·전달만 다시 돈다 (fetch-export --retag)."
   },
@@ -59,8 +59,8 @@
    "type": "n8n-nodes-base.set",
    "typeVersion": 3.4,
    "position": [
-    -680,
-    300
+    -600,
+    200
    ],
    "notes": "실행 환경 스위치. home 은 파이프라인 코드가 설치된 절대경로, python 은 그 안의 인터프리터(가상환경 등) 경로다. 이 노드 하나만 고치면 모든 SSH 명령이 값을 이어받는다."
   },
@@ -74,8 +74,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    -460,
-    300
+    -360,
+    200
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -115,8 +115,8 @@
    "type": "n8n-nodes-base.if",
    "typeVersion": 2.2,
    "position": [
-    -240,
-    300
+    -120,
+    200
    ],
    "notes": "새로 처리할 메일이 없거나(found=false) 락이 점유 중이면 조용히 끝난다 — 매 폴링마다 카드를 올리지 않는다. 락 점유 중이면 메시지를 seen 에 넣지 않아 다음 폴링에 재시도된다."
   },
@@ -130,8 +130,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    -20,
-    300
+    120,
+    200
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -150,8 +150,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    200,
-    300
+    -600,
+    460
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -170,8 +170,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    420,
-    300
+    -360,
+    460
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -190,8 +190,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    640,
-    300
+    -120,
+    460
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -210,8 +210,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    860,
-    300
+    120,
+    460
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -230,8 +230,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    1080,
-    300
+    360,
+    460
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -243,15 +243,15 @@
   {
    "parameters": {
     "authentication": "privateKey",
-    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py llm --timeout 1800"
+    "command": "=cd {{ $('0. 환경').first().json.home }} && set -a && . ./.env 2>/dev/null; set +a; {{ $('0. 환경').first().json.python }} pipeline.py llm"
    },
    "id": "b1000000-0000-4000-8000-00000000000c",
    "name": "6. LLM 용도추론",
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    1300,
-    300
+    -600,
+    720
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -291,8 +291,8 @@
    "type": "n8n-nodes-base.if",
    "typeVersion": 2.2,
    "position": [
-    1520,
-    300
+    -360,
+    720
    ],
    "notes": "exit 0 이지만 아무것도 안 한 침묵 실패를 잡는다 — LLM 호출 스크립트가 배치 실패를 삼키고 exit 0 을 내므로 종료코드 검증만으로는 못 잡는다. batches_failed>0 또는 ok:false 면 경보, 파이프라인은 계속."
   },
@@ -306,8 +306,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    1740,
-    140
+    -120,
+    600
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -326,15 +326,15 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    1960,
-    300
+    120,
+    720
    ],
    "credentials": {
     "sshPrivateKey": {
      "name": "SSH: your-host"
     }
    },
-   "notes": "대시보드·워크시트를 생성·자체검증한 뒤 배포처로 전달한다. 원본에서는 생성·검증과 배포가 별개 단계였으나 공개판에서는 하나의 export 스테이지로 합쳤다."
+   "notes": "csv·json·html 산출물을 만들고 .env 의 BUDGET_TARGETS(html/email/discord/hook/artifact)로 전달한다. 월 연속성 불변식 검사 포함."
   },
   {
    "parameters": {
@@ -346,8 +346,8 @@
    "type": "n8n-nodes-base.ssh",
    "typeVersion": 1,
    "position": [
-    2180,
-    300
+    360,
+    720
    ],
    "credentials": {
     "sshPrivateKey": {
@@ -366,8 +366,8 @@
    "type": "n8n-nodes-base.code",
    "typeVersion": 2,
    "position": [
-    2400,
-    300
+    600,
+    720
    ],
    "notes": "SSH 노드 exit code 무시 대응. 던지면 Error Workflow 로 연결된 알림이 뜬다. 결과 카드가 먼저 올라간 뒤 경보가 뜨도록 결과 알림 노드 뒤에 둔다."
   },
@@ -383,7 +383,7 @@
    "typeVersion": 2,
    "position": [
     -900,
-    700
+    520
    ],
    "webhookId": "b1000000-0000-4000-8000-000000000013",
    "notes": "헤드리스 재태깅 진입점 — yaml 을 고친 뒤 POST 요청 한 번으로 재실행한다. 경로값 자체가 비밀 역할을 하므로 공개 전에 자신만의 값으로 바꿔라."
