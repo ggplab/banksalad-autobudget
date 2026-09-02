@@ -42,7 +42,7 @@ flowchart LR
 |---|---|---|---|
 | ① Trigger | 파일 드롭 | Gmail 자동 수신 · 재태깅 · n8n 스케줄 · cron/launchd | `--from-gmail` (토큰 1회 발급) / `n8n/budget-pipeline.json` / `examples/` |
 | ② 보강 | 건너뜀 | 쿠팡(주문·이츠·와우) · 컬리(주문·멤버스) · 네이버페이 | Gmail 토큰이 있으면 자동으로 켜짐. 끄기 `BUDGET_ENRICH=0` |
-| ② LLM | OpenRouter | `claude` (Claude Code CLI) · `codex` (Codex CLI) · `gemini` (Gemini CLI) · `none` | `BUDGET_LLM_BACKEND=` |
+| ② LLM | OpenRouter | `claude` (Claude Code CLI) · `codex` (Codex CLI) · `gemini` (Gemini CLI) · `none` | `BUDGET_LLM_BACKEND=` — claude·codex 는 실측 통과, gemini 는 호출 경로만 구현(계정 설정 문제로 미실측) |
 | ③ Target | `dist/budget.html` | `email` · `discord` · `hook` · `artifact` — 콤마로 여러 개 | `BUDGET_TARGETS=html,discord` |
 | 알림 | stderr | Discord 결과 카드 | `BUDGET_DISCORD_WEBHOOK_URL=` |
 | 오케스트레이터 | `pipeline.py run` 한 프로세스 | n8n (SSH 노드 1개 = 단계 1개) | n8n JSON 임포트 |

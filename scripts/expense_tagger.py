@@ -798,9 +798,10 @@ def _llm_call_codex(user: str, model: str, timeout: int = 240) -> str:
 
 
 def _llm_call_gemini(user: str, model: str, timeout: int = 240) -> str:
-    """Google Gemini CLI 헤드리스 호출(`gemini -p`)."""
-    return _run_cli([os.environ.get("GEMINI_BIN", "gemini"), "-p", _cli_prompt(user),
-                     *(["-m", model] if model else [])], timeout)
+    """Google Gemini CLI 헤드리스 호출 (위치 인자 프롬프트, `-p` 는 deprecated).
+    Workspace 계정은 GOOGLE_CLOUD_PROJECT env 가 필요하다 — CLI 가 그 오류를 내면 .env 에 넣는다."""
+    return _run_cli([os.environ.get("GEMINI_BIN", "gemini"), *(["-m", model] if model else []),
+                     "-o", "text", _cli_prompt(user)], timeout)
 
 
 def _parse_llm_reply(text: str, batch: list[dict]) -> dict[int, tuple[str, float]]:

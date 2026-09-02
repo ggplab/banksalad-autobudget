@@ -38,7 +38,7 @@ git 에 올리지 마. 모르는 건 추측 말고 물어봐.
 |---|---|---|
 | Claude Code | `BUDGET_LLM_BACKEND=claude` | `claude -p --tools ""` 로 순수 판정기 호출. 구독이면 추가 비용 없음 |
 | Codex CLI | `BUDGET_LLM_BACKEND=codex` | `codex exec -o <file>` 로 마지막 메시지를 받는다 |
-| Gemini CLI | `BUDGET_LLM_BACKEND=gemini` | `gemini -p` stdout 에서 JSON 을 뽑는다 |
+| Gemini CLI | `BUDGET_LLM_BACKEND=gemini` | `gemini -o text "<프롬프트>"` stdout 에서 JSON 을 뽑는다. Workspace 계정은 `GOOGLE_CLOUD_PROJECT` 필요. **미실측** |
 
 세 백엔드 모두 응답에서 `{"results":[...]}` JSON 만 추려 쓰고, 허용 라벨 밖·확신도 범위 밖·모르는 id 는 버린다.
 헤드리스(ssh·cron·launchd)에서 CLI 가 로그인 정보를 못 읽으면 `openrouter` 로 두는 게 빠르다.
